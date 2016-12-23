@@ -3,8 +3,7 @@ import contextlib
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException,\
-    ElementNotVisibleException, WebDriverException, MoveTargetOutOfBoundsException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, MoveTargetOutOfBoundsException
 from selenium.webdriver.remote.webelement import WebElement
 
 import extended_expected_conditions as eec
@@ -90,6 +89,127 @@ class BasePage(object):
         else:
             element.click()
 
+    def shift_select(self, first_element, last_element):
+        """
+        Clicks a web element and shift clicks another web element.
+
+        :param first_element: WebElement instance
+        :param last_element: WebElement instance
+        :return: None
+        """
+        self.click(first_element)
+        self.shift_click(last_element)
+
+    def multi_select(self, elements_to_select):
+        """
+        Multi-select any number of elements.
+
+        :param elements_to_select: list of WebElement instances
+        :return: None
+        """
+        # Click the first element
+        first_element = elements_to_select.pop()
+        self.click(first_element)
+
+        # Click the rest
+        for index, element in enumerate(elements_to_select, start=1):
+            self.multi_click(element)
+
+    def select_from_drop_down_by_value(self, locator, value, params=None):
+        """
+        Select option from drop down widget using value.
+
+        :param locator: locator tuple or WebElement instance
+        :param value: string
+        :param params: (optional) locator parameters
+        :return: None
+        """
+        from selenium.webdriver.support.ui import Select
+
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self.get_present_element(locator, params)
+
+        Select(element).select_by_value(value)
+
+    def select_from_drop_down_by_text(self, drop_down_locator, option_locator, option_text, params=None):
+        """
+        Select option from drop down widget using text.
+
+        :param drop_down_locator: locator tuple (if any, params needs to be in place) or WebElement instance
+        :param option_locator: locator tuple (if any, params needs to be in place)
+        :param option_text: text to base option selection on
+        :param params: Dictionary containing dictionary of params
+        :return: None
+        """
+        # Open/activate drop down
+        self.click(drop_down_locator, params['drop_down'])
+
+        # Get options
+        for option in self.get_present_elements(option_locator, params['option']):
+            if self.get_text(option) == option_text:
+                self.click(option)
+                break
+
+    def select_from_drop_down_by_locator(self, drop_down_locator, option_locator, params=None):
+        """
+        Select option from drop down widget using locator.
+
+        :param drop_down_locator: locator tuple or WebElement instance
+        :param option_locator: locator tuple or WebElement instance
+        :param params: Dictionary containing dictionary of params
+        :return: None
+        """
+        # Open/activate drop down
+        self.click(drop_down_locator, params['drop_down'])
+
+        # Click option in drop down
+        self.click(option_locator, params['option'])
+
+    def get_attribute(self, locator, attribute, params=None, timeout=None, visible=False):
+        """
+        Get attribute from element based on locator with optional parameters.
+
+        Calls get_element() with expected condition: visibility of element located
+
+        :param locator: locator tuple or WebElement instance
+        :param attribute: attribute to return
+        :param params: (optional) locator parameters
+        :param timeout: (optional) time to wait for text (default: None)
+        :param visible: should element be visible before getting text (default: False)
+        :return: element attribute
+        """
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self.get_present_element(locator, params, timeout, visible)
+        try:
+            return element.get_attribute(attribute)
+        except AttributeError:
+            msg = "Element with attribute <{}> was never located!".format(attribute)
+            raise NoSuchElementException(msg)
+
+    def get_text(self, locator, params=None, timeout=None, visible=True):
+        """
+        Get text or value from element based on locator with optional parameters.
+
+        :param locator: element identifier
+        :param params: (optional) locator parameters
+        :param timeout: (optional) time to wait for text (default: None)
+        :param visible: should element be visible before getting text (default: True)
+        :return: element text, value or empty string
+        """
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self.get_present_element(locator, params, timeout, visible)
+
+        if element.text:
+            return element.text
+        else:
+            try:
+                return element.get_attribute('value')
+            except AttributeError:
+                return ""
+
     def enter_text(self, locator, text, with_click=True, with_clear=False, with_enter=False, params=None):
         """
         Enter text into a web element.
@@ -120,7 +240,7 @@ class BasePage(object):
 
         actions.perform()
 
-    def drag_and_drop(self, source_element, target_element):
+    def drag_and_drop(self, source_element, target_element, params=None):
         """
         Drag source element and drop at target element.
 
@@ -128,8 +248,14 @@ class BasePage(object):
 
         :param source_element: WebElement instance
         :param target_element: WebElement instance or list of x- and y-coordinates
+        :param params: Dictionary containing dictionary of params
         :return: None
         """
+        if not isinstance(source_element, WebElement):
+            source_element = self.get_visible_element(source_element, params['source'])
+        if not isinstance(target_element, WebElement) and not isinstance(target_element, list):
+            source_element = self.get_visible_element(target_element, params['target'])
+
         action = ActionChains(self.driver)
         if isinstance(target_element, WebElement):
             action.drag_and_drop(source_element, target_element)
@@ -137,6 +263,39 @@ class BasePage(object):
             action.click_and_hold(source_element).move_by_offset(*target_element).release()
 
         action.perform()
+
+    def get_element_with_text(self, locator, text, params=None, timeout=None, visible=False):
+        """
+        Get element that contains the text <text> either by text or by attribute value.
+
+        :param locator: locator tuple or list of WebElements
+        :param text: text that the element should contain
+        :param params: (optional) locator parameters
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param visible: (optional) if the element should also be visible (default: False)
+        :return: WebElement instance
+        """
+        elements = locator
+        if not isinstance(elements, list):
+            elements = self.get_present_elements(elements, params, timeout, visible)
+
+        for element in elements:
+            element_text = self.get_text(element)
+            if element_text is not None and text in element_text.strip():
+                return element
+            else:
+                attrib = element.get_attribute('value')
+                if attrib is not None and text in attrib.strip():
+                    return element
+
+        if timeout == 0:
+            return None  # Element with text was not present, and since timeout == 0 we don't wish to fail.
+
+        if isinstance(locator, list):
+            msg = "None of the elements had the text: {}".format(text)
+        else:
+            msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(*locator, text=text)
+        raise NoSuchElementException(msg)
 
     def get_present_element(self, locator, params=None, timeout=None, visible=False):
         """
@@ -163,7 +322,7 @@ class BasePage(object):
 
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: WAIT_FOR_WEB_ELEMENT)
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
         :return: WebElement instance
         """
         return self.get_present_element(locator, params, timeout, True)
@@ -193,7 +352,7 @@ class BasePage(object):
 
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: WAIT_FOR_WEB_ELEMENT)
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
         :return: WebElement instance
         """
         return self.get_present_elements(locator, params, timeout, True)
@@ -207,7 +366,7 @@ class BasePage(object):
         :param locator: element identifier
         :param expected_condition: expected condition of element (ie. visible, clickable, etc)
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element (default: WAIT_FOR_WEB_ELEMENT)
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
         :param kwargs: optional arguments to expected conditions
         :return: WebElement instance, list of WebElements, or None
         """
@@ -231,6 +390,84 @@ class BasePage(object):
                      "\nTimeout: {}".format(expected_condition, timeout)
 
         return WebDriverWait(self.driver, timeout).until(exp_cond, error_msg)
+
+    def get_present_child(self, parent, locator, params=None, timeout=None, visible=False):
+        """
+
+        :param parent:
+        :param locator:
+        :param params:
+        :param timeout:
+        :param visible:
+        :return:
+        """
+        expected_condition = eec.visibility_of_child_located if visible else eec.presence_of_child_located
+        return self._get_child(parent, locator, expected_condition, params, timeout)
+
+    def get_visible_child(self, parent, locator, params=None, timeout=None):
+        """
+
+        :param parent:
+        :param locator:
+        :param params:
+        :param timeout:
+        :return:
+        """
+        return self.get_present_child(parent, locator, params, timeout, True)
+
+    def get_present_children(self, parent, locator, params=None, timeout=None, visible=False):
+        """
+
+        :param parent:
+        :param locator:
+        :param params:
+        :param timeout:
+        :param visible:
+        :return:
+        """
+        expected_condition = eec.visibility_of_all_children_located if visible else eec.presence_of_all_children_located
+        return self._get_child(parent, locator, expected_condition, params, timeout)
+
+    def get_visible_children(self, parent, locator, params=None, timeout=None):
+        """
+
+        :param parent:
+        :param locator:
+        :param params:
+        :param timeout:
+        :return:
+        """
+        return self.get_present_children(parent, locator, params, timeout, True)
+
+    def _get_child(self, parent, locator, expected_condition, params=None, timeout=None, error_msg=''):
+        """
+
+        :param parent:
+        :param locator:
+        :param expected_condition:
+        :param params:
+        :param timeout:
+        :param error_msg:
+        :return:
+        """
+        return self._get(locator, expected_condition, params, timeout, error_msg, parent=parent)
+
+    @staticmethod
+    def get_compliant_locator(by, locator, params=None):
+        """
+        Returns a tuple of by and locator prepared with optional parameters.
+
+        :param by: Type of locator (ie. CSS, ClassName, etc)
+        :param locator: element locator
+        :param params: (optional) locator parameters
+        :return: tuple of by and locator with optional parameters
+        """
+        from selenium.webdriver.common.by import By
+
+        if params is not None and not isinstance(params, dict):
+            raise TypeError("<params> need to be of type <dict>, was <{}>".format(params.__class__.__name__))
+
+        return getattr(By, by), locator.format(**(params if params else {}))
 
     def scroll_element_into_view(self, selector):
         """
@@ -265,7 +502,7 @@ class BasePage(object):
         try:
             ActionChains(self.driver).move_to_element_with_offset(element, -100, -100).perform()
         except (StaleElementReferenceException, MoveTargetOutOfBoundsException):
-            pass  # Means the hover is already closed or otherwise gone
+            return True  # Means the hover is already closed or otherwise gone
 
     def perform_hover_action(self, locator, func, error_msg='', exceptions=None, params=None, **kwargs):
         """
@@ -278,7 +515,7 @@ class BasePage(object):
         :param error_msg: error message to display if hovering failed
         :param exceptions: list of exceptions (default: StaleElementReferenceException)
         :param params: (optional) locator parameters
-        :param kwargs: any key word arguments to the function
+        :param kwargs: keyword arguments to the function func
         :return: result of performed action
         """
         def _do_hover():
@@ -322,13 +559,70 @@ class BasePage(object):
             # Close hover
             self.close_hover(element)
 
+    def wait_for_element_to_disappear(self, locator, params=None, timeout=None):
+        """
+        Waits until the element is not visible (hidden) or no longer attached to the DOM.
+
+        Raises TimeoutException if element does not become invisible.
+
+        :param locator: locator tuple or WebElement instance
+        :param params: (optional) locator params
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :return: None
+        """
+        exp_cond = eec.invisibility_of if isinstance(locator, WebElement) else ec.invisibility_of_element_located
+        try:
+            self._get(locator, exp_cond, params, timeout, error_msg="Element never disappeared")
+        except (StaleElementReferenceException, NoSuchElementException):
+            return True  # Element was not present, ie disappeared was satisfied
+
+    def wait_for_non_empty_text(self, locator, params=None, timeout=5):
+        """
+        Wait and get elements when they're populated with any text.
+
+        :param locator: locator tuple
+        :param params: (optional) locator params
+        :param timeout: (optional) maximum waiting time (in seconds) (default: 5)
+        :return: list of WebElements
+        """
+        def _do_wait():
+            elements = self.get_present_elements(locator, params)
+            for element in elements:
+                if not self.get_text(element):
+                    return False
+            return elements
+
+        return ActionWait(timeout).until(_do_wait, "Element text was never populated!")
+
+    def wait_for_attribute(self, locator, attribute, value, params=None, timeout=5):
+        """
+        Waits for an element attribute to get a certain value.
+
+        Note: This function re-get's the element in a loop to avoid caching or stale element issues.
+
+        :Example:
+            Wait for the class attribute to get 'board-hidden' value
+
+        :param locator: locator tuple
+        :param attribute: element attribute
+        :param value: attribute value to wait for
+        :param params: (optional) locator params
+        :param timeout: (optional) maximum waiting time (in seconds) (default: 5)
+        :return: None
+        """
+        def _do_wait():
+            element = self.get_present_element(locator, params)
+            return value in self.get_attribute(element, attribute)
+
+        ActionWait(timeout).until(_do_wait, "Attribute never set!")
+
     def wait_for_zero_queries(self, timeout=5):
         """
         Waits until there are no active or pending API requests.
 
         Raises TimeoutException should silence not be had.
 
-        :param timeout: time to wait for silence (default is 5 seconds)
+        :param timeout: time to wait for silence (default: 5 seconds)
         :return: None
         """
         from selenium.webdriver.support.ui import WebDriverWait
