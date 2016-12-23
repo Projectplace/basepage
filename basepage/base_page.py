@@ -15,9 +15,9 @@ class BasePage(object):
     def __init__(self, driver, implicit_wait=30):
         """
 
-        :param driver:
-        :param implicit_wait:
-        :return:
+        :param driver: WebDriver instance
+        :param implicit_wait: implicit wait used by WebDriverWait (default: 30 seconds)
+        :return: None
         """
         self._driver = driver
         self._implicit_wait = implicit_wait
