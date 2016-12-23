@@ -8,7 +8,7 @@ setup(
     author='Jim Brannlund',
     author_email='jim.brannlund@gmail.com',
     url='https://github.com/BeyondEvil/basepage',
-    download_url='https://github.com/peterldowns/mypackage/tarball/0.1',
+    download_url='https://github.com/BeyondEvil/basepage/tarball/0.1',
     keywords=['testing', 'webdriver', 'selenium'],
     classifiers=[],
 )
