@@ -22,17 +22,21 @@ class BasePage(object):
         self._driver = driver
         self._implicit_wait = implicit_wait
 
-    def __getattr__(self, item):
+    def __getattr__(self, attrib):
         """
+        Access webdriver attributes via self
 
-        :param item:
-        :return:
+        :param attrib: attribute to get
+        :return: attribute
         """
-        return getattr(self.driver, item)
+        return getattr(self.driver, attrib)
 
     @property
     def driver(self):
         return self._driver
+
+    def reload_page(self):
+        self.refresh()
 
     def click(self, locator, params=None, timeout=None):
         """
