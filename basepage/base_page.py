@@ -144,10 +144,10 @@ class BasePage(object):
         :return: None
         """
         # Open/activate drop down
-        self.click(drop_down_locator, params['drop_down'])
+        self.click(drop_down_locator, params['drop_down'] if params else None)
 
         # Get options
-        for option in self.get_present_elements(option_locator, params['option']):
+        for option in self.get_present_elements(option_locator, params['option'] if params else None):
             if self.get_text(option) == option_text:
                 self.click(option)
                 break
@@ -162,10 +162,10 @@ class BasePage(object):
         :return: None
         """
         # Open/activate drop down
-        self.click(drop_down_locator, params['drop_down'])
+        self.click(drop_down_locator, params['drop_down'] if params else None)
 
         # Click option in drop down
-        self.click(option_locator, params['option'])
+        self.click(option_locator, params['option'] if params else None)
 
     def get_attribute(self, locator, attribute, params=None, timeout=None, visible=False):
         """
@@ -253,9 +253,9 @@ class BasePage(object):
         :return: None
         """
         if not isinstance(source_element, WebElement):
-            source_element = self.get_visible_element(source_element, params['source'])
+            source_element = self.get_visible_element(source_element, params['source'] if params else None)
         if not isinstance(target_element, WebElement) and not isinstance(target_element, list):
-            source_element = self.get_visible_element(target_element, params['target'])
+            source_element = self.get_visible_element(target_element, params['target'] if params else None)
 
         action = ActionChains(self.driver)
         if isinstance(target_element, WebElement):
@@ -476,35 +476,54 @@ class BasePage(object):
         """
         element = selector
         if isinstance(element, WebElement):
-            self.execute_sync_script("argument[0].scrollIntoView( true );".format(selector), element)
+            self.execute_script("argument[0].scrollIntoView( true );".format(selector), element)
         else:
-            self.execute_sync_script("$('{}')[0].scrollIntoView( true );".format(selector))
+            self.execute_script("$('{}')[0].scrollIntoView( true );".format(selector))
 
-    def open_hover(self, locator, params=None):
+    def open_hover(self, locator, params=None, use_js=False):
         """
         Open a hover or popover.
 
         :param locator: locator tuple or WebElement instance
         :param params: (optional) locator parameters
+        :param use_js: use javascript to open hover
         :return: element hovered
         """
         element = locator
         if not isinstance(element, WebElement):
             element = self.get_visible_element(locator, params)
+
+        if use_js:
+            self._js_hover('mouseover', element)
+            return element
+
         ActionChains(self.driver).move_to_element(element).perform()
         return element
 
-    def close_hover(self, element):
+    def close_hover(self, element, use_js=False):
         """
         Close hover by moving to a set offset "away" from the element being hovered.
 
         :param element: element that triggered the hover to open
+        :param use_js: use javascript to close hover
         :return: None
         """
         try:
-            ActionChains(self.driver).move_to_element_with_offset(element, -100, -100).perform()
+            if use_js:
+                self._js_hover('mouseout', element)
+            else:
+                ActionChains(self.driver).move_to_element_with_offset(element, -100, -100).perform()
         except (StaleElementReferenceException, MoveTargetOutOfBoundsException):
             return True  # Means the hover is already closed or otherwise gone
+
+    def _js_hover(self, event, element):
+        script = "var mouseEvent = new MouseEvent(\"{0}\", {{" \
+                 "bubbles: true," \
+                 "clientX: {1[x]}," \
+                 "clientY: {1[y]}}});" \
+                 "arguments[0].dispatchEvent(mouseEvent);"
+
+        self.execute_script(script.format(event, element.location), element)
 
     def perform_hover_action(self, locator, func, error_msg='', exceptions=None, params=None, **kwargs):
         """
@@ -539,7 +558,7 @@ class BasePage(object):
         return ActionWait().until(_do_hover, msg)
 
     @contextlib.contextmanager
-    def hover(self, locator, params=None):
+    def hover(self, locator, params=None, use_js=False):
         """
         Context manager for hovering.
 
@@ -551,15 +570,16 @@ class BasePage(object):
 
         :param locator: locator tuple
         :param params: (optional) locator params
+        :param use_js: use javascript to hover
         :return: None
         """
         # Open hover
-        element = self.open_hover(locator, params)
+        element = self.open_hover(locator, params, use_js)
         try:
             yield
         finally:
             # Close hover
-            self.close_hover(element)
+            self.close_hover(element, use_js)
 
     def wait_for_element_to_disappear(self, locator, params=None, timeout=None):
         """
