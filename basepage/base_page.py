@@ -35,9 +35,6 @@ class BasePage(object):
     def driver(self):
         return self._driver
 
-    def reload_page(self):
-        self.refresh()
-
     def click(self, locator, params=None, timeout=None):
         """
         Click web element.
@@ -378,7 +375,7 @@ class BasePage(object):
 
         if not isinstance(locator, WebElement):
             error_msg += "\nLocator of type <{}> with selector <{}> with params <{params}>".format(*locator, params=params)
-            locator = BasePage.get_compliant_locator(*locator, params=params)
+            locator = self.__class__.get_compliant_locator(*locator, params=params)
 
         exp_cond = expected_condition(locator, **kwargs)
         if timeout == 0:
@@ -394,6 +391,20 @@ class BasePage(object):
                      "\nTimeout: {}".format(expected_condition, timeout)
 
         return WebDriverWait(self.driver, timeout).until(exp_cond, error_msg)
+
+    @staticmethod
+    def get_compliant_locator(by, locator, params):
+        """
+        This function needs to be implemented by the subclass.
+
+        Return a tuple of type By (selenium.webdriver.common.by) and locator(string) prepared with optional parameters.
+
+        :param by: Type of locator from selenium.webdriver.common.by (ie. CSS, ClassName, etc)
+        :param locator: element locator (string)
+        :param params: (optional) locator parameters (dictionary)
+        :return: tuple of by and locator
+        """
+        raise NotImplementedError
 
     def get_present_child(self, parent, locator, params=None, timeout=None, visible=False):
         """
@@ -456,31 +467,18 @@ class BasePage(object):
         """
         return self._get(locator, expected_condition, params, timeout, error_msg, parent=parent)
 
-    @staticmethod
-    def get_compliant_locator(by, locator, params=None):
-        """
-        Returns a tuple of by and locator prepared with optional parameters.
-
-        :param by: Type of locator (ie. CSS, ClassName, etc)
-        :param locator: element locator
-        :param params: (optional) locator parameters
-        :return: tuple of by and locator with optional parameters
-        """
-        from selenium.webdriver.common.by import By
-
-        if params is not None and not isinstance(params, dict):
-            raise TypeError("<params> need to be of type <dict>, was <{}>".format(params.__class__.__name__))
-
-        return getattr(By, by), locator.format(**(params if params else {}))
-
     def scroll_element_into_view(self, selector):
         """
         Scrolls an element into view.
 
-        :param selector: selector of element to scroll into view
+        :param selector: selector of element or WebElement to scroll into view
         :return: None
         """
-        self.execute_sync_script("$('{}')[0].scrollIntoView( true );".format(selector))
+        element = selector
+        if isinstance(element, WebElement):
+            self.execute_sync_script("argument[0].scrollIntoView( true );".format(selector), element)
+        else:
+            self.execute_sync_script("$('{}')[0].scrollIntoView( true );".format(selector))
 
     def open_hover(self, locator, params=None):
         """
