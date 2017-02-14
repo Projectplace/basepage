@@ -8,7 +8,7 @@ setup(
     author='Jim Brannlund',
     author_email='jim.brannlund@gmail.com',
     url='https://github.com/Projectplace/basepage',
-    download_url='https://github.com/Projectplace/basepage/tarball/0.1',
+    download_url='https://github.com/Projectplace/basepage/tarball/0.4.2',
     keywords=['testing', 'webdriver', 'selenium'],
     install_requires=['selenium'],
     classifiers=[],
