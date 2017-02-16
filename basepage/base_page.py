@@ -608,7 +608,7 @@ class BasePage(object):
         :return: list of WebElements
         """
         def _do_wait():
-            elements = self.get_present_elements(locator, params)
+            elements = self.get_present_elements(locator, params, timeout=0)
             for element in elements:
                 if not self.get_text(element):
                     return False
