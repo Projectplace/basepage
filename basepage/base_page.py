@@ -478,7 +478,7 @@ class BasePage(object):
         if isinstance(element, WebElement):
             self.execute_script("argument[0].scrollIntoView( true );".format(selector), element)
         else:
-            self.execute_script("$('{}')[0].scrollIntoView( true );".format(selector))
+            self.execute_script("$('{}')[0].scrollIntoView( true );".format(selector[1]))
 
     def open_hover(self, locator, params=None, use_js=False):
         """
