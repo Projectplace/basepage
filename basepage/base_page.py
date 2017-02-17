@@ -14,6 +14,7 @@ class BasePage(object):
 
     def __init__(self, driver, implicit_wait=30):
         """
+        BasePage instance.
 
         :param driver: WebDriver instance
         :param implicit_wait: implicit wait used by WebDriverWait (default: 30 seconds)
@@ -24,7 +25,7 @@ class BasePage(object):
 
     def __getattr__(self, attrib):
         """
-        Access webdriver attributes via self
+        Access Webdriver attributes via self.
 
         :param attrib: attribute to get
         :return: attribute
@@ -183,6 +184,7 @@ class BasePage(object):
         element = locator
         if not isinstance(element, WebElement):
             element = self.get_present_element(locator, params, timeout, visible)
+
         try:
             return element.get_attribute(attribute)
         except AttributeError:
@@ -298,7 +300,7 @@ class BasePage(object):
             msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(*locator, text=text)
         raise NoSuchElementException(msg)
 
-    def get_present_element(self, locator, params=None, timeout=None, visible=False):
+    def get_present_element(self, locator, params=None, timeout=None, visible=False, parent=None):
         """
         Get element present in the DOM.
 
@@ -309,10 +311,12 @@ class BasePage(object):
         :param params: (optional) locator parameters
         :param timeout: (optional) time to wait for element (default: self._implicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
+        :param parent: internal (see #get_present_child)
         :return: WebElement instance
         """
+        error_msg = "Child was never present" if parent else "Element was never present!"
         expected_condition = ec.visibility_of_element_located if visible else ec.presence_of_element_located
-        return self._get(locator, expected_condition, params, timeout, error_msg="Element was never present!")
+        return self._get(locator, expected_condition, params, timeout, error_msg, parent)
 
     def get_visible_element(self, locator, params=None, timeout=None):
         """
@@ -328,9 +332,9 @@ class BasePage(object):
         """
         return self.get_present_element(locator, params, timeout, True)
 
-    def get_present_elements(self, locator, params=None, timeout=None, visible=False):
+    def get_present_elements(self, locator, params=None, timeout=None, visible=False, parent=None):
         """
-        Get element present in the DOM.
+        Get elements present in the DOM.
 
         If timeout is 0 (zero) return WebElement instance or None, else we wait and retry for timeout and raise
         TimeoutException should the element not be found.
@@ -339,14 +343,16 @@ class BasePage(object):
         :param params: (optional) locator parameters
         :param timeout: (optional) time to wait for element (default: self._implicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
+        :param parent: internal (see #get_present_children)
         :return: WebElement instance
         """
+        error_msg = "Children were never present" if parent else "Elements were never present!"
         expected_condition = eec.visibility_of_all_elements_located if visible else ec.presence_of_all_elements_located
-        return self._get(locator, expected_condition, params, timeout, error_msg="Element was never present!")
+        return self._get(locator, expected_condition, params, timeout, error_msg, parent)
 
     def get_visible_elements(self, locator, params=None, timeout=None):
         """
-        Get element both present AND visible in the DOM.
+        Get elements both present AND visible in the DOM.
 
         If timeout is 0 (zero) return WebElement instance or None, else we wait and retry for timeout and raise
         TimeoutException should the element not be found.
@@ -358,7 +364,69 @@ class BasePage(object):
         """
         return self.get_present_elements(locator, params, timeout, True)
 
-    def _get(self, locator, expected_condition, params=None, timeout=None, error_msg="", **kwargs):
+    def get_present_child(self, parent, locator, params=None, timeout=None, visible=False):
+        """
+        Get child-element present in the DOM.
+
+        If timeout is 0 (zero) return WebElement instance or None, else we wait and retry for timeout and raise
+        TimeoutException should the element not be found.
+
+        :param parent: parent-element
+        :param locator: locator tuple
+        :param params: (optional) locator params
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param visible: (optional) if the element should also be visible (default: False)
+        :return: WebElement instance
+        """
+        return self.get_present_element(locator, params, timeout, visible, parent=parent)
+
+    def get_visible_child(self, parent, locator, params=None, timeout=None):
+        """
+        Get child-element both present AND visible in the DOM.
+
+        If timeout is 0 (zero) return WebElement instance or None, else we wait and retry for timeout and raise
+        TimeoutException should the element not be found.
+
+        :param parent: parent-element
+        :param locator: locator tuple
+        :param params: (optional) locator params
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :return: WebElement instance
+        """
+        return self.get_present_child(parent, locator, params, timeout, True)
+
+    def get_present_children(self, parent, locator, params=None, timeout=None, visible=False):
+        """
+        Get child-elements both present in the DOM.
+
+        If timeout is 0 (zero) return WebElement instance or None, else we wait and retry for timeout and raise
+        TimeoutException should the element not be found.
+
+        :param parent: parent-element
+        :param locator: locator tuple
+        :param params: (optional) locator params
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param visible: (optional) if the element should also be visible (default: False)
+        :return: WebElement instance
+        """
+        return self.get_present_elements(locator, params, timeout, visible, parent=parent)
+
+    def get_visible_children(self, parent, locator, params=None, timeout=None):
+        """
+        Get child-elements both present AND visible in the DOM.
+
+        If timeout is 0 (zero) return WebElement instance or None, else we wait and retry for timeout and raise
+        TimeoutException should the element not be found.
+
+        :param parent: parent-element
+        :param locator: locator tuple
+        :param params: (optional) locator params
+        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :return: WebElement instance
+        """
+        return self.get_present_children(parent, locator, params, timeout, True)
+
+    def _get(self, locator, expected_condition, params=None, timeout=None, error_msg="", driver=None, **kwargs):
         """
         Get elements based on locator with optional parameters.
 
@@ -368,6 +436,8 @@ class BasePage(object):
         :param expected_condition: expected condition of element (ie. visible, clickable, etc)
         :param params: (optional) locator parameters
         :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param error_msg: (optional) customized error message
+        :param driver: (optional) alternate Webdriver instance (example: parent-element)
         :param kwargs: optional arguments to expected conditions
         :return: WebElement instance, list of WebElements, or None
         """
@@ -377,10 +447,12 @@ class BasePage(object):
             error_msg += "\nLocator of type <{}> with selector <{}> with params <{params}>".format(*locator, params=params)
             locator = self.__class__.get_compliant_locator(*locator, params=params)
 
+        _driver = driver or self.driver
+
         exp_cond = expected_condition(locator, **kwargs)
         if timeout == 0:
             try:
-                return exp_cond(self.driver)
+                return exp_cond(_driver)
             except NoSuchElementException:
                 return None
 
@@ -390,7 +462,7 @@ class BasePage(object):
         error_msg += "\nExpected condition: {}" \
                      "\nTimeout: {}".format(expected_condition, timeout)
 
-        return WebDriverWait(self.driver, timeout).until(exp_cond, error_msg)
+        return WebDriverWait(_driver, timeout).until(exp_cond, error_msg)
 
     @staticmethod
     def get_compliant_locator(by, locator, params):
@@ -405,67 +477,6 @@ class BasePage(object):
         :return: tuple of by and locator
         """
         raise NotImplementedError
-
-    def get_present_child(self, parent, locator, params=None, timeout=None, visible=False):
-        """
-
-        :param parent:
-        :param locator:
-        :param params:
-        :param timeout:
-        :param visible:
-        :return:
-        """
-        expected_condition = eec.visibility_of_child_located if visible else eec.presence_of_child_located
-        return self._get_child(parent, locator, expected_condition, params, timeout)
-
-    def get_visible_child(self, parent, locator, params=None, timeout=None):
-        """
-
-        :param parent:
-        :param locator:
-        :param params:
-        :param timeout:
-        :return:
-        """
-        return self.get_present_child(parent, locator, params, timeout, True)
-
-    def get_present_children(self, parent, locator, params=None, timeout=None, visible=False):
-        """
-
-        :param parent:
-        :param locator:
-        :param params:
-        :param timeout:
-        :param visible:
-        :return:
-        """
-        expected_condition = eec.visibility_of_all_children_located if visible else eec.presence_of_all_children_located
-        return self._get_child(parent, locator, expected_condition, params, timeout)
-
-    def get_visible_children(self, parent, locator, params=None, timeout=None):
-        """
-
-        :param parent:
-        :param locator:
-        :param params:
-        :param timeout:
-        :return:
-        """
-        return self.get_present_children(parent, locator, params, timeout, True)
-
-    def _get_child(self, parent, locator, expected_condition, params=None, timeout=None, error_msg=''):
-        """
-
-        :param parent:
-        :param locator:
-        :param expected_condition:
-        :param params:
-        :param timeout:
-        :param error_msg:
-        :return:
-        """
-        return self._get(locator, expected_condition, params, timeout, error_msg, parent=parent)
 
     def scroll_element_into_view(self, selector):
         """
@@ -554,7 +565,7 @@ class BasePage(object):
                 exc.append(exceptions)
         exc = tuple(exc)
 
-        msg = error_msg if error_msg else "Performing hover actions failed!"
+        msg = error_msg or "Performing hover actions failed!"
         return ActionWait().until(_do_hover, msg)
 
     @contextlib.contextmanager
