@@ -277,18 +277,14 @@ class BasePage(object):
         if click:
             self.click(element)
 
-        actions = ActionChains(self.driver)
-
         if clear:
             element.clear()
 
         if backspace:
-            times = 1
-            while times <= backspace:
+            actions = ActionChains(self.driver)
+            for _ in range(backspace):
                 actions.send_keys(Keys.BACKSPACE)
-                times += 1
-
-        actions.perform()
+            actions.perform()
 
     def drag_and_drop(self, source_element, target_element, params=None):
         """
