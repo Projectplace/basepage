@@ -241,6 +241,37 @@ class BasePage(object):
 
         actions.perform()
 
+    def erase_text(self, locator, click=True, clear=False, backspace=0, params=None):
+        """
+        Various ways to erase text from web element.
+
+        :param locator: locator tuple or WebElement instance
+        :param click: clicks the input field
+        :param clear: clears the input field
+        :param backspace: how many times to hit backspace
+        :param params: (optional) locator params
+        :return: None
+        """
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self.get_visible_element(locator, params)
+
+        if click:
+            self.click(element)
+
+        actions = ActionChains(self.driver)
+
+        if clear:
+            element.clear()
+
+        if backspace:
+            times = 1
+            while times <= backspace:
+                actions.send_keys(Keys.BACKSPACE)
+                times += 1
+
+        actions.perform()
+
     def drag_and_drop(self, source_element, target_element, params=None):
         """
         Drag source element and drop at target element.
