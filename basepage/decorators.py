@@ -13,7 +13,27 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import warnings
+import functools
 from selenium.common.exceptions import StaleElementReferenceException
+
+
+def deprecated(func):
+    """This is a decorator which can be used to mark functions
+    as deprecated. It will result in a warning being emmitted
+    when the function is used.
+
+    :param func Function to be deprecated
+    """
+
+    @functools.wraps(func)
+    def new_func(*args, **kwargs):
+        warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+        warnings.warn("Call to deprecated function {}.".format(func.__name__), category=DeprecationWarning, stacklevel=2)
+        warnings.simplefilter('default', DeprecationWarning)  # reset filter
+        return func(*args, **kwargs)
+
+    return new_func
 
 
 def handle_stale(msg='', exceptions=None):
@@ -82,19 +102,16 @@ def wait(msg='', exceptions=None, timeout=10):
             import time
 
             poll_freq = 0.5
-
-            value = None
             end_time = time.time() + timeout
             while time.time() <= end_time:
                 try:
-                    value = func(*args, **kwargs)
+                    if func(*args, **kwargs):
+                        return
                 except exc:
                     pass  # continue
 
                 time.sleep(poll_freq)
                 poll_freq *= 1.25
-                if value:
-                    return value
             raise RuntimeError(msg)
         return wait_handler
     return wrapper

@@ -24,6 +24,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 import extended_expected_conditions as eec
 from wait import ActionWait
+from decorators import deprecated
 
 
 class BasePage(object):
@@ -692,9 +693,25 @@ class BasePage(object):
 
         ActionWait(timeout).until(_do_wait, "Attribute never set!")
 
+    @deprecated
     def wait_for_zero_queries(self, timeout=5):
         """
+        DEPRECATED! USE wait_for_ajax_calls_to_complete() INSTEAD!
+
         Waits until there are no active or pending API requests.
+
+        Raises TimeoutException should silence not be had.
+
+        :param timeout: time to wait for silence (default: 5 seconds)
+        :return: None
+        """
+        from selenium.webdriver.support.ui import WebDriverWait
+
+        WebDriverWait(self.driver, timeout).until(lambda s: s.execute_script("return jQuery.active === 0"))
+
+    def wait_for_ajax_calls_to_complete(self, timeout=5):
+        """
+        Waits until there are no active or pending ajax requests.
 
         Raises TimeoutException should silence not be had.
 
