@@ -8,7 +8,7 @@ It provides two parts:
 * A wrapper around [webdriver (selenium)](https://github.com/SeleniumHQ/selenium) and its functions and properties
 * Convenience methods for dealing with elements
 
-We recommend you use it in conjunction with the page-object model.
+We recommend you use it in conjunction with the [page-object model](https://github.com/SeleniumHQ/selenium/wiki/PageObjects) (examples are in java, but the pattern works for python as well).
 
 ## Instantiation
 
