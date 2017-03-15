@@ -6,7 +6,7 @@ Basepage is a python package that enables you to write selenium tests using pyth
 It provides two parts:
 
 * A wrapper around [webdriver (selenium)](https://github.com/SeleniumHQ/selenium) and its functions and properties
-* Convience methods for dealing with elements
+* Convenience methods for dealing with elements
 
 We recommend you use it in conjunction with the page-object model.
 
@@ -77,22 +77,21 @@ class MyBasepage(Basepage):
 	def __init__(self, driver):
 		super(BasePage, self).__init__(driver)
     
-    @staticmethod
-    def get_compliant_locator(by, locator, params=None):
-        """
-        Returns a tuple of by and locator prepared with optional parameters.
+	@staticmethod
+	def get_compliant_locator(by, locator, params=None):
+		"""
+		Returns a tuple of by and locator prepared with optional parameters	
+		:param by: Type of locator (ie. CSS, ClassName, etc)
+	    :param locator: element locator
+	    :param params: (optional) locator parameters
+	    :return: tuple of by and locator with optional parameters
+	    """
+	    from selenium.webdriver.common.by import By
 
-        :param by: Type of locator (ie. CSS, ClassName, etc)
-        :param locator: element locator
-        :param params: (optional) locator parameters
-        :return: tuple of by and locator with optional parameters
-        """
-        from selenium.webdriver.common.by import By
+	    if params is not None and not isinstance(params, dict):
+	        raise TypeError("<params> need to be of type <dict>, was <{}>".format(params.__class__.__name__))
 
-        if params is not None and not isinstance(params, dict):
-            raise TypeError("<params> need to be of type <dict>, was <{}>".format(params.__class__.__name__))
-
-        return getattr(By, by), locator.format(**(params or {}))
+	    return getattr(By, by), locator.format(**(params or {}))
 ```
 
 
