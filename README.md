@@ -71,6 +71,12 @@ To be able to use Basepage you need to provide an adapter for selectors, you hav
 
 Example:
 ```python
+from basepage import Basepage
+
+class MyBasepage(Basepage):
+	def __init__(self, driver):
+		super(BasePage, self).__init__(driver)
+    
     @staticmethod
     def get_compliant_locator(by, locator, params=None):
         """
