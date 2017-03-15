@@ -79,9 +79,9 @@ class MyBasepage(Basepage):
     
 	@staticmethod
 	def get_compliant_locator(by, locator, params=None):
-		"""
-		Returns a tuple of by and locator prepared with optional parameters	
-		:param by: Type of locator (ie. CSS, ClassName, etc)
+	    """
+	    Returns a tuple of by and locator prepared with optional parameters	
+	    :param by: Type of locator (ie. CSS, ClassName, etc)
 	    :param locator: element locator
 	    :param params: (optional) locator parameters
 	    :return: tuple of by and locator with optional parameters
