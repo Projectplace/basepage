@@ -29,16 +29,16 @@ from decorators import deprecated
 
 class BasePage(object):
 
-    def __init__(self, driver, implicit_wait=30):
+    def __init__(self, driver, explicit_wait=30):
         """
         BasePage instance.
 
         :param driver: WebDriver instance
-        :param implicit_wait: implicit wait used by WebDriverWait (default: 30 seconds)
+        :param explicit_wait: explicit wait used by WebDriverWait (default: 30 seconds)
         :return: None
         """
         self._driver = driver
-        self._implicit_wait = implicit_wait
+        self._explicit_wait = explicit_wait
 
     def __getattr__(self, attrib):
         """
@@ -318,7 +318,7 @@ class BasePage(object):
         :param locator: locator tuple or list of WebElements
         :param text: text that the element should contain
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
@@ -353,7 +353,7 @@ class BasePage(object):
 
         :param locator: element identifier
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
         :param parent: internal (see #get_present_child)
         :return: WebElement instance
@@ -371,7 +371,7 @@ class BasePage(object):
 
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :return: WebElement instance
         """
         return self.get_present_element(locator, params, timeout, True)
@@ -385,7 +385,7 @@ class BasePage(object):
 
         :param locator: element identifier
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
         :param parent: internal (see #get_present_children)
         :return: WebElement instance
@@ -403,7 +403,7 @@ class BasePage(object):
 
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :return: WebElement instance
         """
         return self.get_present_elements(locator, params, timeout, True)
@@ -418,7 +418,7 @@ class BasePage(object):
         :param parent: parent-element
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
@@ -434,7 +434,7 @@ class BasePage(object):
         :param parent: parent-element
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :return: WebElement instance
         """
         return self.get_present_child(parent, locator, params, timeout, True)
@@ -449,7 +449,7 @@ class BasePage(object):
         :param parent: parent-element
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
@@ -465,7 +465,7 @@ class BasePage(object):
         :param parent: parent-element
         :param locator: locator tuple
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :return: WebElement instance
         """
         return self.get_present_children(parent, locator, params, timeout, True)
@@ -479,7 +479,7 @@ class BasePage(object):
         :param locator: element identifier
         :param expected_condition: expected condition of element (ie. visible, clickable, etc)
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :param error_msg: (optional) customized error message
         :param driver: (optional) alternate Webdriver instance (example: parent-element)
         :param kwargs: optional arguments to expected conditions
@@ -501,7 +501,7 @@ class BasePage(object):
                 return None
 
         if timeout is None:
-            timeout = self._implicit_wait
+            timeout = self._explicit_wait
 
         error_msg += "\nExpected condition: {}" \
                      "\nTimeout: {}".format(expected_condition, timeout)
@@ -531,7 +531,7 @@ class BasePage(object):
         """
         element = selector
         if isinstance(element, WebElement):
-            self.execute_script("argument[0].scrollIntoView( true );".format(selector), element)
+            self.execute_script("arguments[0].scrollIntoView( true );", element)
         else:
             self.execute_script("$('{}')[0].scrollIntoView( true );".format(selector[1]))
 
@@ -644,7 +644,7 @@ class BasePage(object):
 
         :param locator: locator tuple or WebElement instance
         :param params: (optional) locator params
-        :param timeout: (optional) time to wait for element (default: self._implicit_wait)
+        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
         :return: None
         """
         exp_cond = eec.invisibility_of if isinstance(locator, WebElement) else ec.invisibility_of_element_located
@@ -692,22 +692,6 @@ class BasePage(object):
             return value in self.get_attribute(element, attribute)
 
         ActionWait(timeout).until(_do_wait, "Attribute never set!")
-
-    @deprecated
-    def wait_for_zero_queries(self, timeout=5):
-        """
-        DEPRECATED! USE wait_for_ajax_calls_to_complete() INSTEAD!
-
-        Waits until there are no active or pending API requests.
-
-        Raises TimeoutException should silence not be had.
-
-        :param timeout: time to wait for silence (default: 5 seconds)
-        :return: None
-        """
-        from selenium.webdriver.support.ui import WebDriverWait
-
-        WebDriverWait(self.driver, timeout).until(lambda s: s.execute_script("return jQuery.active === 0"))
 
     def wait_for_ajax_calls_to_complete(self, timeout=5):
         """
