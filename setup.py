@@ -1,15 +1,27 @@
-from distutils.core import setup
+from setuptools import setup
 
-setup(
-    name='basepage',
-    packages=['basepage'],
-    version='1.1',
-    description='A wrapper for WebDriver that provides some extended and additional functionality',
-    author='Jim Brannlund',
-    author_email='jbrannlund@planview.com',
-    url='https://github.com/Projectplace/basepage',
-    download_url='https://github.com/Projectplace/basepage/tarball/1.1',
-    keywords=['testing', 'webdriver', 'selenium'],
-    install_requires=['selenium'],
-    classifiers=[],
-)
+setup(name='basepage',
+      use_scm_version=True,
+      description='A wrapper for WebDriver that provides some extended and additional functionality',
+      long_description=open('README.md').read(),
+      author='Jim Brannlund',
+      author_email='jbrannlund@planview.com',
+      url='https://github.com/Projectplace/basepage',
+      packages=['basepage'],
+      setup_requires=['setuptools_scm'],
+      install_requires=['pytest>=2.9.0', 'selenium==3.3.3'],
+      license='Apache Software License 2.0',
+      keywords='testing webdriver selenium',
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Framework :: Pytest',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: Apache Software License 2.0',
+          'Operating System :: POSIX',
+          'Operating System :: Microsoft :: Windows',
+          'Operating System :: MacOS :: MacOS X',
+          'Topic :: Software Development :: Quality Assurance',
+          'Topic :: Software Development :: Testing',
+          'Topic :: Utilities',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2.7'])

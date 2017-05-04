@@ -24,7 +24,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 import extended_expected_conditions as eec
 from wait import ActionWait
-from decorators import deprecated
+from decorators import wait
 
 
 class BasePage(object):
@@ -222,7 +222,7 @@ class BasePage(object):
         if not isinstance(element, WebElement):
             element = self.get_present_element(locator, params, timeout, visible)
 
-        if element.text:
+        if element and element.text:
             return element.text
         else:
             try:
@@ -322,27 +322,36 @@ class BasePage(object):
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
+        @wait()
+        def _wait_for_text():
+            return _loop_elements()
+
+        def _loop_elements():
+            for element in elements:
+                element_text = self.get_text(element, timeout=0)
+                if element_text is not None and text in element_text.strip():
+                    return element
+                else:
+                    attrib = element.get_attribute('value')
+                    if attrib is not None and text in attrib.strip():
+                        return element
+            return None
+
         elements = locator
         if not isinstance(elements, list):
             elements = self.get_present_elements(elements, params, timeout, visible)
-
-        for element in elements:
-            element_text = self.get_text(element)
-            if element_text is not None and text in element_text.strip():
-                return element
-            else:
-                attrib = element.get_attribute('value')
-                if attrib is not None and text in attrib.strip():
-                    return element
+            msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(
+                *locator, text=text)
+        else:
+            msg = "None of the elements had the text: {}".format(text)
 
         if timeout == 0:
-            return None  # Element with text was not present, and since timeout == 0 we don't wish to fail.
+            return _loop_elements()
 
-        if isinstance(locator, list):
-            msg = "None of the elements had the text: {}".format(text)
-        else:
-            msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(*locator, text=text)
-        raise NoSuchElementException(msg)
+        try:
+            return _wait_for_text()
+        except RuntimeError:
+            raise NoSuchElementException(msg)
 
     def get_present_element(self, locator, params=None, timeout=None, visible=False, parent=None):
         """
