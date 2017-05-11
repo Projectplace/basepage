@@ -58,7 +58,7 @@ class ActionWait(object):
         while True:
             value = func(*args, **kwargs)
             if self._debug:
-                print "Value from func within ActionWait: {}".format(value)
+                print("Value from func within ActionWait: {}".format(value))
             if value:
                 break
 

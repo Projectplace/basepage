@@ -22,9 +22,9 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
     MoveTargetOutOfBoundsException
 from selenium.webdriver.remote.webelement import WebElement
 
-import extended_expected_conditions as eec
-from wait import ActionWait
-from decorators import wait
+import basepage.extended_expected_conditions as eec
+from basepage.wait import ActionWait
+from basepage.decorators import wait
 
 
 class BasePage(object):
