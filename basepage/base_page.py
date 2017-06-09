@@ -95,7 +95,9 @@ class BasePage(object):
         :param timeout: (optional) time to wait for element
         :return: None
         """
-        multi_key = Keys.LEFT_CONTROL if 'explorer' in self.driver.name else Keys.COMMAND
+        import sys
+
+        multi_key = Keys.COMMAND if sys.platform == 'darwin' else Keys.LEFT_CONTROL
         self._click(locator, params, timeout, multi_key)
 
     def _click(self, locator, params=None, timeout=None, key=None):

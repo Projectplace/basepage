@@ -19,8 +19,8 @@ There are a couple of ways you can use Basepage.
 from basepage import Basepage
 
 class MyBasepage(Basepage):
-	def __init__(self, driver):
-		super(BasePage, self).__init__(driver)
+    def __init__(self, driver):
+        super(BasePage, self).__init__(driver)
 ```
 This way, Basepage becomes part of `self`, and in your page-objects you can use it like so:
 ```python
@@ -28,27 +28,27 @@ from mybase import MyBasepage
 
 class Loginpage(MyBasepage):
 
-	_username_locator = ('ID', 'username')
-	_password_locator = ('ID', 'password')
-	_login_button_locator = ('CSS_SELECTOR', '.login_button')
+    _username_locator = ('ID', 'username')
+    _password_locator = ('ID', 'password')
+    _login_button_locator = ('CSS_SELECTOR', '.login_button')
 
-	def login(username, password):
-		self.enter_text(self._username_locator, username)
-		self.enter_text(self._password_locator, password)
-		self.click(self._login_button_locator)
+    def login(username, password):
+        self.enter_text(self._username_locator, username)
+        self.enter_text(self._password_locator, password)
+        self.click(self._login_button_locator)
 ```
 
 
 ### Property
 ```python
 class MyBasepage(object):
-	def __init__(self, driver):
-		from basepage import Basepage
-		self._base = Basepage(driver)
+    def __init__(self, driver):
+        from basepage import Basepage
+        self._base = Basepage(driver)
 	
-	@property
-	def base(self):
-		return self._base
+    @property
+    def base(self):
+        return self._base
 ```
 This way, Basepage is a property on MyBasepage, and in your page-objects you can use it like so:
 ```python
@@ -56,14 +56,14 @@ from mybase import MyBasepage
 
 class Loginpage(MyBasepage):
 
-	_username_locator = ('ID', 'username')
-	_password_locator = ('ID', 'password')
-	_login_button_locator = ('CSS_SELECTOR', '.login_button')
+    _username_locator = ('ID', 'username')
+    _password_locator = ('ID', 'password')
+    _login_button_locator = ('CSS_SELECTOR', '.login_button')
 
-	def login(username, password):
-		self.base.enter_text(self._username_locator, username)
-		self.base.enter_text(self._password_locator, password)
-		self.base.click(self._login_button_locator)
+    def login(username, password):
+        self.base.enter_text(self._username_locator, username)
+        self.base.enter_text(self._password_locator, password)
+        self.base.click(self._login_button_locator)
 ```
 
 ## Requirements
@@ -74,24 +74,24 @@ Example:
 from basepage import Basepage
 
 class MyBasepage(Basepage):
-	def __init__(self, driver):
-		super(BasePage, self).__init__(driver)
+    def __init__(self, driver):
+        super(BasePage, self).__init__(driver)
     
-	@staticmethod
-	def get_compliant_locator(by, locator, params=None):
-	    """
-	    Returns a tuple of by and locator prepared with optional parameters	
-	    :param by: Type of locator (ie. CSS, ClassName, etc)
-	    :param locator: element locator
-	    :param params: (optional) locator parameters
-	    :return: tuple of by and locator with optional parameters
-	    """
-	    from selenium.webdriver.common.by import By
+    @staticmethod
+    def get_compliant_locator(by, locator, params=None):
+        """
+        Returns a tuple of by and locator prepared with optional parameters
+        :param by: Type of locator (ie. CSS, ClassName, etc)
+        :param locator: element locator
+        :param params: (optional) locator parameters
+        :return: tuple of by and locator with optional parameters
+        """
+        from selenium.webdriver.common.by import By
 
-	    if params is not None and not isinstance(params, dict):
-	        raise TypeError("<params> need to be of type <dict>, was <{}>".format(params.__class__.__name__))
+        if params is not None and not isinstance(params, dict):
+            raise TypeError("<params> need to be of type <dict>, was <{}>".format(params.__class__.__name__))
 
-	    return getattr(By, by), locator.format(**(params or {}))
+        return getattr(By, by), locator.format(**(params or {}))
 ```
 
 
@@ -106,8 +106,8 @@ import pytest
 from login_page import Loginpage
 
 def test_login(driver):
-	page = Loginpage(driver)
-	page.login("Tom Smith", "123456")
-	assert something
+    page = Loginpage(driver)
+    page.login("Tom Smith", "123456")
+    assert something
 ```
 The `driver` parameter is actually a fixture provided by the pytest-selenium to the pytest framework and represents an instance of webdriver.
