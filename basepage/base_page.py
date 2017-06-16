@@ -253,7 +253,7 @@ class BasePage(object):
 
         actions = ActionChains(self.driver)
         if 'explorer' in self.driver.name and "@" in str(text):
-            actions = self.handle_at_sign_for_ie(text, actions)
+            actions = BasePage.handle_at_sign_for_ie(text, actions)
         else:
             actions.send_keys_to_element(element, text)
 
@@ -276,9 +276,14 @@ class BasePage(object):
         """
         text_list = text.split("@")
         for entry in text_list:
-            if entry is not text_list[0]:
-                actions.key_down(Keys.CONTROL).key_down(Keys.ALT).send_keys("2").key_up(Keys.CONTROL).key_up(Keys.ALT)
-            actions.send_keys(entry)
+            if entry:
+                if entry is not text_list[0]:
+                    actions.key_down(Keys.CONTROL).\
+                        key_down(Keys.ALT).\
+                        send_keys("2").\
+                        key_up(Keys.CONTROL).\
+                        key_up(Keys.ALT)
+                actions.send_keys(entry)
         return actions
 
     def erase_text(self, locator, click=True, clear=False, backspace=0, params=None):
