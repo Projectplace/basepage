@@ -95,9 +95,8 @@ class BasePage(object):
         :param timeout: (optional) time to wait for element
         :return: None
         """
-        import sys
-
-        multi_key = Keys.COMMAND if sys.platform == 'darwin' else Keys.LEFT_CONTROL
+        platform = self.execute_script('return navigator.platform')
+        multi_key = Keys.COMMAND if 'mac' in platform.lower() else Keys.LEFT_CONTROL
         self._click(locator, params, timeout, multi_key)
 
     def _click(self, locator, params=None, timeout=None, key=None):
