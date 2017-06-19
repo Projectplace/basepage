@@ -346,12 +346,15 @@ class BasePage(object):
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
+        if timeout is None:
+            timeout = self._explicit_wait
+
         def _get_elements():
             if not isinstance(locator, list):
                 return self.get_present_elements(locator, params, timeout, visible)
             return locator
 
-        @wait(timeout=timeout or self._explicit_wait)
+        @wait(timeout=timeout)
         def _wait_for_text():
             for element in _get_elements():
                 element_text = self.get_text(element, timeout=0)
