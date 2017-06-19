@@ -106,7 +106,7 @@ def wait(msg='', exceptions=None, timeout=10):
             while time.time() <= end_time:
                 try:
                     value = func(*args, **kwargs)
-                    if value:
+                    if value or timeout == 0:
                         return value
                 except exc:
                     pass  # continue
