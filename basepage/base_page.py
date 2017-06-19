@@ -342,7 +342,7 @@ class BasePage(object):
         :param locator: locator tuple or list of WebElements
         :param text: text that the element should contain
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for text (default: 10 seconds)
+        :param timeout: (optional) time to wait for text (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
