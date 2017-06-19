@@ -342,16 +342,18 @@ class BasePage(object):
         :param locator: locator tuple or list of WebElements
         :param text: text that the element should contain
         :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element (default: self._explicit_wait)
+        :param timeout: (optional) time to wait for text (default: 10 seconds)
         :param visible: (optional) if the element should also be visible (default: False)
         :return: WebElement instance
         """
-        @wait()
-        def _wait_for_text():
-            return _loop_elements()
+        def _get_elements():
+            if not isinstance(locator, list):
+                return self.get_present_elements(locator, params, timeout, visible)
+            return locator
 
-        def _loop_elements():
-            for element in elements:
+        @wait(timeout=timeout or self._explicit_wait)
+        def _wait_for_text():
+            for element in _get_elements():
                 element_text = self.get_text(element, timeout=0)
                 if element_text is not None and text in element_text.strip():
                     return element
@@ -361,16 +363,9 @@ class BasePage(object):
                         return element
             return None
 
-        elements = locator
-        if not isinstance(elements, list):
-            elements = self.get_present_elements(elements, params, timeout, visible)
-            msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(
-                *locator, text=text)
-        else:
-            msg = "None of the elements had the text: {}".format(text)
-
-        if timeout == 0:
-            return _loop_elements()
+        msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(
+            *locator, text=text) if not isinstance(locator, list) else \
+            "None of the elements had the text: {}".format(text)
 
         try:
             return _wait_for_text()
