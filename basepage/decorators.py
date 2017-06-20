@@ -15,7 +15,10 @@ limitations under the License.
 """
 import warnings
 import functools
+import logging
 from selenium.common.exceptions import StaleElementReferenceException
+
+LOGGER = logging.getLogger(__name__)
 
 
 def deprecated(func):
@@ -29,7 +32,8 @@ def deprecated(func):
     @functools.wraps(func)
     def new_func(*args, **kwargs):
         warnings.simplefilter('always', DeprecationWarning)  # turn off filter
-        warnings.warn("Call to deprecated function {}.".format(func.__name__), category=DeprecationWarning, stacklevel=2)
+        warnings.warn("Call to deprecated function {}.".format(func.__name__),
+                      category=DeprecationWarning, stacklevel=2)
         warnings.simplefilter('default', DeprecationWarning)  # reset filter
         return func(*args, **kwargs)
 
@@ -106,9 +110,10 @@ def wait(msg='', exceptions=None, timeout=10):
             while time.time() <= end_time:
                 try:
                     value = func(*args, **kwargs)
-                    if value or timeout == 0:
+                    if value:
                         return value
-                except exc:
+                except exc as e:
+                    LOGGER.debug(e.message)
                     pass  # continue
 
                 time.sleep(poll_freq)

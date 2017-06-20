@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import logging
 import contextlib
 
 from selenium.webdriver.common.action_chains import ActionChains
@@ -25,6 +26,8 @@ from selenium.webdriver.remote.webelement import WebElement
 import basepage.extended_expected_conditions as eec
 from basepage.wait import ActionWait
 from basepage.decorators import wait
+
+LOGGER = logging.getLogger(__name__)
 
 
 class BasePage(object):
@@ -335,9 +338,26 @@ class BasePage(object):
 
         action.perform()
 
+    def is_element_with_text_present(self, locator, text, params=None, visible=False):
+        """
+        Get element that contains <text> either by text or by attribute value.
+
+        :param locator: locator tuple or list of WebElements
+        :param text: text that the element should contain
+        :param params: (optional) locator parameters
+        :param visible: (optional) if the element should also be visible (default: False)
+        :return: WebElement instance or False
+        """
+        elements = self.get_present_elements(locator, params, 0, visible) if not isinstance(locator, list) else locator
+
+        for element in elements:
+            element_text = self.get_text(element)
+            if element_text is not None and text in element_text.strip():
+                return element
+        return False
+
     def get_element_with_text(self, locator, text, params=None, timeout=None, visible=False):
         """
-        Get element that contains the text <text> either by text or by attribute value.
 
         :param locator: locator tuple or list of WebElements
         :param text: text that the element should contain
@@ -349,30 +369,21 @@ class BasePage(object):
         if timeout is None:
             timeout = self._explicit_wait
 
-        def _get_elements():
-            if not isinstance(locator, list):
-                return self.get_present_elements(locator, params, timeout, visible)
-            return locator
-
         @wait(timeout=timeout)
         def _wait_for_text():
-            for element in _get_elements():
-                element_text = self.get_text(element, timeout=0)
-                if element_text is not None and text in element_text.strip():
-                    return element
-                else:
-                    attrib = element.get_attribute('value')
-                    if attrib is not None and text in attrib.strip():
-                        return element
-            return None
+            return self.is_element_with_text_present(locator, text, params, visible)
 
         msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(
             *locator, text=text) if not isinstance(locator, list) else \
             "None of the elements had the text: {}".format(text)
 
+        if timeout == 0:
+            return self.is_element_with_text_present(locator, text, params, visible)
+
         try:
             return _wait_for_text()
-        except RuntimeError:
+        except RuntimeError as e:
+            LOGGER.debug(e.message)
             raise NoSuchElementException(msg)
 
     def get_present_element(self, locator, params=None, timeout=None, visible=False, parent=None):
@@ -519,7 +530,8 @@ class BasePage(object):
         from selenium.webdriver.support.ui import WebDriverWait
 
         if not isinstance(locator, WebElement):
-            error_msg += "\nLocator of type <{}> with selector <{}> with params <{params}>".format(*locator, params=params)
+            error_msg += "\nLocator of type <{}> with selector <{}> with params <{params}>".format(
+                *locator, params=params)
             locator = self.__class__.get_compliant_locator(*locator, params=params)
 
         _driver = driver or self.driver
