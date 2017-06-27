@@ -438,7 +438,7 @@ class BasePage(object):
         :return: WebElement instance
         """
         error_msg = "Children were never present" if parent else "Elements were never present!"
-        expected_condition = eec.visibility_of_all_elements_located if visible else ec.presence_of_all_elements_located
+        expected_condition = ec.visibility_of_all_elements_located if visible else ec.presence_of_all_elements_located
         return self._get(locator, expected_condition, params, timeout, error_msg, parent)
 
     def get_visible_elements(self, locator, params=None, timeout=None):

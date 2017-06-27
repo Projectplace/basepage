@@ -16,27 +16,6 @@ limitations under the License.
 from selenium.common.exceptions import StaleElementReferenceException, WebDriverException, ElementNotVisibleException
 
 
-class visibility_of_all_elements_located(object):
-    """ An expectation for checking that an element is present on the DOM of a
-    page and visible. Visibility means that the element is not only displayed
-    but also has a height and width that is greater than 0.
-    locator - used to find the element
-    returns the WebElement once it is located and visible
-    """
-    def __init__(self, locator):
-        self.locator = locator
-
-    def __call__(self, driver):
-        try:
-            elements = _find_elements(driver, self.locator)
-            for element in elements:
-                if not _element_if_visible(element):
-                    raise ElementNotVisibleException
-            return elements
-        except StaleElementReferenceException:
-            return False
-
-
 class invisibility_of(object):
     """ An expectation for checking that an element is NOT present on the DOM of a
     page and/or NOT visible. Visibility means that the element is not only displayed
