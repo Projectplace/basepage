@@ -3,12 +3,12 @@ from distutils.core import setup
 setup(
     name='basepage',
     packages=['basepage'],
-    version='1.6.7',
+    version='1.6.8',
     description='A wrapper for WebDriver that provides some extended and additional functionality',
     author='Jim Brannlund',
     author_email='jbrannlund@planview.com',
     url='https://github.com/Projectplace/basepage',
-    download_url='https://github.com/Projectplace/basepage/tarball/1.6.7',
+    download_url='https://github.com/Projectplace/basepage/tarball/1.6.8',
     keywords=['testing', 'webdriver', 'selenium'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

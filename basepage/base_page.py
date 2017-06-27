@@ -352,6 +352,9 @@ class BasePage(object):
         """
         elements = self.get_present_elements(locator, params, 0, visible) if not isinstance(locator, list) else locator
 
+        if not elements:  # Can't iterate over bool
+            return False
+
         for element in elements:
             element_text = self.get_text(element)
             if element_text is not None and text in element_text.strip():
