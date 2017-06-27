@@ -20,7 +20,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException,\
-    MoveTargetOutOfBoundsException
+    MoveTargetOutOfBoundsException, ElementNotVisibleException
 from selenium.webdriver.remote.webelement import WebElement
 
 import basepage.extended_expected_conditions as eec
@@ -340,7 +340,9 @@ class BasePage(object):
 
     def is_element_with_text_present(self, locator, text, params=None, visible=False):
         """
-        Get element that contains <text> either by text or by attribute value.
+        Is element that contains <text> either by text or by attribute value present.
+
+        Note: Will return the element if the outcome is positive.
 
         :param locator: locator tuple or list of WebElements
         :param text: text that the element should contain
@@ -358,6 +360,9 @@ class BasePage(object):
 
     def get_element_with_text(self, locator, text, params=None, timeout=None, visible=False):
         """
+        Get element that contains <text> either by text or by attribute value.
+
+        Note: if timeout is 0, this function will not wait for the element(s) to become present.
 
         :param locator: locator tuple or list of WebElements
         :param text: text that the element should contain
@@ -369,7 +374,7 @@ class BasePage(object):
         if timeout is None:
             timeout = self._explicit_wait
 
-        @wait(timeout=timeout)
+        @wait(exceptions=ElementNotVisibleException, timeout=timeout)
         def _wait_for_text():
             return self.is_element_with_text_present(locator, text, params, visible)
 
