@@ -602,8 +602,9 @@ class BasePage(object):
         if use_js:
             self._js_hover('mouseover', element)
             return element
-
-        ActionChains(self.driver).move_to_element(element).perform()
+        actions = ActionChains(self.driver)
+        actions.move_to_element(element).perform()
+        actions.reset_actions()
         return element
 
     def close_hover(self, element, use_js=False):
@@ -618,7 +619,9 @@ class BasePage(object):
             if use_js:
                 self._js_hover('mouseout', element)
             else:
-                ActionChains(self.driver).move_to_element_with_offset(element, -100, -100).perform()
+                actions = ActionChains(self.driver)
+                actions.move_to_element_with_offset(element, -100, -100)
+                actions.reset_actions()
         except (StaleElementReferenceException, MoveTargetOutOfBoundsException):
             return True  # Means the hover is already closed or otherwise gone
 
@@ -631,7 +634,8 @@ class BasePage(object):
 
         self.execute_script(script.format(event, element.location), element)
 
-    def perform_hover_action(self, locator, func, error_msg='', exceptions=None, params=None, **kwargs):
+    def perform_hover_action(self, locator, func, error_msg='', exceptions=None, params=None,
+                             alt_loc=None, alt_params=None, **kwargs):
         """
         Hovers an element and performs whatever action is specified in the supplied function.
 
@@ -642,12 +646,14 @@ class BasePage(object):
         :param error_msg: error message to display if hovering failed
         :param exceptions: list of exceptions (default: StaleElementReferenceException)
         :param params: (optional) locator parameters
+        :param alt_loc: alternate locator tuple or WebElement instance to move to with offset
+        :param alt_params: (optional) alternate locator parameters
         :param kwargs: keyword arguments to the function func
         :return: result of performed action
         """
         def _do_hover():
             try:
-                with self.hover(locator, params):
+                with self.hover(locator, params, alt_loc, alt_params):
                     return func(**kwargs)
             except exc:
                 return False
@@ -664,7 +670,7 @@ class BasePage(object):
         return ActionWait().until(_do_hover, msg)
 
     @contextlib.contextmanager
-    def hover(self, locator, params=None, use_js=False):
+    def hover(self, locator, params=None, use_js=False, alt_loc=None, alt_params=None):
         """
         Context manager for hovering.
 
@@ -674,9 +680,11 @@ class BasePage(object):
             with self.hover(locator, params):
                 // do something with the hover
 
-        :param locator: locator tuple
+        :param locator: locator tuple or WebElement instance
         :param params: (optional) locator params
         :param use_js: use javascript to hover
+        :param alt_loc: alternate locator tuple or WebElement instance for close hover
+        :param alt_params: (optional) alternate locator params
         :return: None
         """
         # Open hover
@@ -685,6 +693,10 @@ class BasePage(object):
             yield
         finally:
             # Close hover
+            if alt_loc:
+                element = alt_loc
+                if not isinstance(element, WebElement):
+                    element = self.get_visible_element(alt_loc, alt_params)
             self.close_hover(element, use_js)
 
     def wait_for_element_to_disappear(self, locator, params=None, timeout=None):
@@ -756,3 +768,21 @@ class BasePage(object):
         from selenium.webdriver.support.ui import WebDriverWait
 
         WebDriverWait(self.driver, timeout).until(lambda s: s.execute_script("return jQuery.active === 0"))
+
+    def upload_to_file_input(self, locator, path, params=None):
+        """
+        Sends in path in an <input type=file> to upload a file. The <input type=file> must be set to be visible,
+        usually by setting the style of the element to display-block; instead of display-none or nothing at all.
+        Uses WebElement's send_keys instead of ActionChains.
+
+        :param locator: locator tuple or WebElement instance
+        :param path: full path to file to be uploaded
+        :type path: string
+        :param params: (optional) locator params
+        :return: None
+        """
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self.get_visible_element(locator, params)
+
+        element.send_keys(path)
