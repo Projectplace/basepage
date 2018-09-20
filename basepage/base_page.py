@@ -261,6 +261,9 @@ class BasePage(object):
 
         if with_clear:
             element.clear()
+            # Click to regain focus as clear does clear w/ blur by design -
+            # https://w3c.github.io/webdriver/webdriver-spec.html#element-clear
+            self.click(element)
 
         if with_enter:
             actions.send_keys(Keys.ENTER)
