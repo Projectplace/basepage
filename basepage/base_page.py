@@ -394,7 +394,7 @@ class BasePage(object):
         try:
             return _wait_for_text()
         except RuntimeError as e:
-            LOGGER.debug(e.message)
+            LOGGER.debug(e)
             raise NoSuchElementException(msg)
 
     def get_present_element(self, locator, params=None, timeout=None, visible=False, parent=None):
