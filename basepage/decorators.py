@@ -113,7 +113,7 @@ def wait(msg='', exceptions=None, timeout=10):
                     if value:
                         return value
                 except exc as e:
-                    LOGGER.debug(e.message)
+                    LOGGER.debug(e)
                     pass  # continue
 
                 time.sleep(poll_freq)
