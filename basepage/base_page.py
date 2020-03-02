@@ -250,13 +250,12 @@ class BasePage(object):
         if not isinstance(element, WebElement):
             element = self.get_visible_element(locator, params)
 
-        if with_click:
-            self.click(element)
-
         actions = ActionChains(self.driver)
         if 'explorer' in self.driver.name and "@" in str(text):
             actions = BasePage.handle_at_sign_for_ie(text, actions)
         else:
+            if with_click:
+                actions.click(element)
             actions.send_keys_to_element(element, text)
 
         if with_clear:
