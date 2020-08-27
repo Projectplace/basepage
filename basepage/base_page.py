@@ -341,7 +341,7 @@ class BasePage(object):
 
         action.perform()
 
-    def is_element_with_text_present(self, locator, text, params=None, visible=False):
+    def is_element_with_text_present(self, locator, text, params=None, visible=False, exact_match=False):
         """
         Is element that contains <text> either by text or by attribute value present.
 
@@ -351,6 +351,7 @@ class BasePage(object):
         :param text: text that the element should contain
         :param params: (optional) locator parameters
         :param visible: (optional) if the element should also be visible (default: False)
+        :param exact_match: (optional) If the text match should be exact or substring match (default: False)
         :return: WebElement instance or False
         """
         elements = self.get_present_elements(locator, params, 0, visible) if not isinstance(locator, list) else locator
@@ -360,11 +361,15 @@ class BasePage(object):
 
         for element in elements:
             element_text = self.get_text(element)
-            if element_text is not None and text in element_text.strip():
-                return element
+            if element_text is not None:
+                actual_text = element_text.strip()
+                if exact_match and actual_text == text:
+                    return element
+                elif text in actual_text:
+                    return element
         return False
 
-    def get_element_with_text(self, locator, text, params=None, timeout=None, visible=False):
+    def get_element_with_text(self, locator, text, params=None, timeout=None, visible=False, exact_match=False):
         """
         Get element that contains <text> either by text or by attribute value.
 
@@ -375,6 +380,7 @@ class BasePage(object):
         :param params: (optional) locator parameters
         :param timeout: (optional) time to wait for text (default: self._explicit_wait)
         :param visible: (optional) if the element should also be visible (default: False)
+        :param exact_match: (optional) If the text match should be exact or substring (default: False)
         :return: WebElement instance
         """
         if timeout is None:
@@ -382,14 +388,14 @@ class BasePage(object):
 
         @wait(exceptions=ElementNotVisibleException, timeout=timeout)
         def _wait_for_text():
-            return self.is_element_with_text_present(locator, text, params, visible)
+            return self.is_element_with_text_present(locator, text, params, visible, exact_match)
 
         msg = "Element with type <{}>, locator <{}> and text <{text}> was never located!".format(
             *locator, text=text) if not isinstance(locator, list) else \
             "None of the elements had the text: {}".format(text)
 
         if timeout == 0:
-            return self.is_element_with_text_present(locator, text, params, visible)
+            return self.is_element_with_text_present(locator, text, params, visible, exact_match)
 
         try:
             return _wait_for_text()
