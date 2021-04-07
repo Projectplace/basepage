@@ -19,8 +19,12 @@ import contextlib
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException,\
-    MoveTargetOutOfBoundsException, ElementNotVisibleException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    MoveTargetOutOfBoundsException,
+    ElementNotVisibleException
+)
 from selenium.webdriver.remote.webelement import WebElement
 
 import basepage.extended_expected_conditions as eec
@@ -137,6 +141,21 @@ class BasePage(object):
         # Click the rest
         for index, element in enumerate(elements_to_select, start=1):
             self.multi_click(element)
+
+    def move_to_element(self, locator, params=None, timeout=None):
+        """
+        Moves the mouse to specified element.
+        :param locator: locator tuple or WebElement instance
+        :param params: (optional) locator parameters
+        :param timeout: (optional) time to wait for element
+        :return: None
+        """
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self._get(
+                locator, ec.visibility_of_element_located, params, timeout, "Element was never visible!"
+            )
+        ActionChains(self.driver).move_to_element(element).perform()
 
     def select_from_drop_down_by_value(self, locator, value, params=None):
         """
@@ -795,18 +814,3 @@ class BasePage(object):
             element = self.get_visible_element(locator, params)
 
         element.send_keys(path)
-
-    def move_to_element(self, locator, params=None, timeout=None):
-        """
-        Moves the "mouse" to specified element.
-        :param locator: locator tuple or WebElement instance
-        :param params: (optional) locator parameters
-        :param timeout: (optional) time to wait for element
-        :return: None
-        """
-        element = locator
-        if not isinstance(element, WebElement):
-            element = self._get(
-                locator, ec.visibility_of_element_located, params, timeout, "Element was never visible!"
-            )
-        ActionChains(self.driver).move_to_element(element).perform()

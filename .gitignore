@@ -3,3 +3,5 @@ node_modules/
 .idea
 MANIFEST
 yarn.lock
+*.egg-info
+
