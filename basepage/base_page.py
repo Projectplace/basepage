@@ -795,3 +795,18 @@ class BasePage(object):
             element = self.get_visible_element(locator, params)
 
         element.send_keys(path)
+
+    def move_to_element(self, locator, params=None, timeout=None):
+        """
+        Moves the "mouse" to specified element.
+        :param locator: locator tuple or WebElement instance
+        :param params: (optional) locator parameters
+        :param timeout: (optional) time to wait for element
+        :return: None
+        """
+        element = locator
+        if not isinstance(element, WebElement):
+            element = self._get(
+                locator, ec.visibility_of_element_located, params, timeout, "Element was never visible!"
+            )
+        ActionChains(self.driver).move_to_element(element).perform()
