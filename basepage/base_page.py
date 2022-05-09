@@ -575,7 +575,11 @@ class BasePage(object):
         exp_cond = expected_condition(locator, **kwargs)
         if timeout == 0:
             try:
-                return exp_cond(_driver)
+                exp_cond_result = exp_cond(_driver)
+                # Only return if we get a real WebElement back, otherwise we want to pass the
+                # result downwards to the WebDriverWait().until() function, be it False, None, or otherwise
+                if isinstance(exp_cond_result, WebElement):
+                    return exp_cond_result
             except NoSuchElementException:
                 return None
 
