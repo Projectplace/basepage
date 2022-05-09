@@ -576,9 +576,9 @@ class BasePage(object):
         if timeout == 0:
             try:
                 exp_cond_result = exp_cond(_driver)
-                # Only return if we get a real WebElement back, otherwise we want to pass the
-                # result downwards to the WebDriverWait().until() function, be it False, None, or otherwise
-                if isinstance(exp_cond_result, WebElement):
+                # Only return exp_cond_result if it is a list (either empty or will contain one or more WebElements) or
+                # a WebElement - anything else -> let until method handle other types
+                if isinstance(exp_cond_result, (WebElement, list)):
                     return exp_cond_result
             except NoSuchElementException:
                 return None
