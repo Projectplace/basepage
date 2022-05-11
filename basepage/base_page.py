@@ -575,11 +575,7 @@ class BasePage(object):
         exp_cond = expected_condition(locator, **kwargs)
         if timeout == 0:
             try:
-                exp_cond_result = exp_cond(_driver)
-                # Only return exp_cond_result if it is a list (either empty or will contain one or more WebElements) or
-                # a WebElement - anything else -> let until method handle other types
-                if isinstance(exp_cond_result, (WebElement, list)):
-                    return exp_cond_result
+                return exp_cond(_driver)
             except NoSuchElementException:
                 return None
 
